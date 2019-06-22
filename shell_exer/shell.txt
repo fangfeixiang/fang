@@ -1,0 +1,58 @@
+细节：
+1、date +F% 注意中间的空格,在shell里可以生成当前日期
+	tar -zcf log-`date +%F`.tar.gz /var/log   生成类似log-2019-06-10.tar.gz的文件
+2、free -m   显示内存使用情况大小以M为单位
+   df / -h -m 显示／目录硬盘空间情况，大小以M为单位
+   awk '/Mem/{print $4}'   awk匹配含Mem的行并打印第4列
+3、RANDOM  系统变量，能随机生成一个0-32767的整数
+  num=$[RANDOM%100+1]    变量的计算表示方法
+4、$USER显示当前使用的用户
+	$UID显示当前用户的uid....
+5、数组表示方法：
+	game=(石头，剪刀，布)
+	game[0]是石头
+	game[1]是剪刀。。。
+6、for i in {1..254}    注意后边的1..254表示的是范围
+7、ping -c2 -i0.3 -w1 192.168.4.4   -c是次数   －i是指发送每个包等的时间，-w是运行这条			ping的总共时间，最好不要小于1，如果w的值小于c*i，则到时间后边的包就			不运行了
+8、let i++ 让变量i自加，这是一条完整语句
+9、ctrl+z是将程序停止并放到后边，程序里加＆是放在后台运行
+	jobs显示所有后边程序
+	bg是将放在后台停止的程序开始执行，例bg 1
+	fg将后台的程序转到前台
+10、    多进程版，可以在适时间内结束254台主机的测试
+
+myping(){
+  ping -c2 -i0.2 -w1 $1 &> /dev/null
+    if [ $? -eq 0 ];then
+      echo "tong"
+    else
+      echo "butong"
+    fi               		
+}
+  for i in {1..254}
+  do
+    myping 192.168.4.$i &
+  done
+
+11、echo -e   支持正则
+
+12、echo -n 换行符，加了-n相当于echo后不换行     －r  回车符    -b 退格  echo后边
+啥都不加相当于是直接换行
+
+
+13、seq 15    生成数字1到15
+
+14、自动填写密码，yes等   注意EOF必须得加
+
+rm -rf ~/.ssh/known_hosts
+expect   <<EOF
+set timeout 1				等待1秒就自动输入
+spawn ssh 192.168.4.254
+expect "yes/no" {send "yes\r"}
+expect "password" {send "Teacher.niu\r"}
+expect "#" {send "yum -y install httpd\r"}
+expect "#" {send "exit\r"}
+EOF
+
+
+~         

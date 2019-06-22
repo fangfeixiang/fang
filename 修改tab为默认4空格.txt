@@ -1,0 +1,3 @@
+~/.vimrc中写入
+set ts=4  (注：ts是tabstop的缩写，设TAB宽4个空格)
+set expandtab

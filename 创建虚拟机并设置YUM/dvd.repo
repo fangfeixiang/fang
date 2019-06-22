@@ -1,0 +1,5 @@
+[devdlopment]
+name=dvd
+baseurl=http://192.168.4.254/centos7
+enabled=1
+gpgcheck=0

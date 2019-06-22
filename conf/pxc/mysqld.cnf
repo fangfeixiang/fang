@@ -1,0 +1,20 @@
+# Template my.cnf for PXC
+# Edit to your requirements.
+[client]
+socket=/var/lib/mysql/mysql.sock
+
+[mysqld]
+server-id=71
+#不能重复,每台要修改
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+log-bin
+#binlog日志
+log_slave_updates
+#启用链式复制，和主从从设置时一样
+expire_logs_days=7
+#日志文件保留天数
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
