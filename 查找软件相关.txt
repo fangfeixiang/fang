@@ -1,0 +1,44 @@
+在linux中文件与软件一般都是安装在到/usr/share和/usr/local中了，如果我们需要查看软件安装路径linux为我们提供了查看命令，whereis 就可以帮我查找文件安装路径在哪里了。
+
+比如你想查找eclipse文件，那么就：
+
+[root@localhost ~]# whereis eclipse
+会显示：
+
+eclipse: /usr/bin/eclipse /usr/lib/eclipse /usr/share/eclipse
+
+如果我想查看我的oracel数据库安装在哪里
+
+一、查看文件安装路径：这里以Oracle为例。比如说我安装了Oracle，但是不知道文件都安装在哪些地方、放在哪些文件夹里，可 以用下面的命令查看所有的文件路径
+
+在终端输入：
+
+ 代码如下   复制代码
+whereis oracle
+
+回车，如果你安装好了Oracle，就会显示文件安装的地址，例如我的显示(安装地址可能会不同)
+
+oracle: /usr/bin/oracle   /usr/lib/oracle   /usr/share/oracle  /usr/share/man/man1/oracle.1.gz
+可以看出来，Oracle安装在是个目录里。
+
+如果你没有安装Oracle或者Oracle安装没成功，则不会显示文件路径出来。只提示:
+
+oracle:
+
+二、查询运行文件所在路径：
+
+如果你只要查询文件的运行文件所在地址，直接用下面的命令就可以了(还是以Oracle为例)：
+
+which oracle
+结果会显示：
+
+/usr/bin/oracle
+
+以上只适合安装路径加入PATH里
+
+如果是源码安装的话，你可以使用-prefix指定安装路径，这样，你可以很轻松知道软件的安装路径；
+
+3.如果是rpm包安装的话，可以使用rpm -qal查询一下
+
+rpm -qf /路径/程序名 可以查到一个程序属于哪个rpm包，然后rpm -ql那个包可以看到那个包的所有文件和路径等等。还可以解开成一个cpio文件等等之类的，仔细研究一下rpm的参数吧。
+完全可以做到任何你想做的。
