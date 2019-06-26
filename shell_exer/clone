@@ -1,0 +1,31 @@
+#!/bin/bash
+. /etc/init.d/functions
+CONF_DIR=/etc/libvirt/qemu
+IMG_DIR=/var/lib/libvirt/images
+BASEVM=node_tedu
+uuid=`uuidgen`
+createvm(){
+ qemu-img create -f qcow2 -b ${IMG_DIR}/.${BASEVM}.qcow2 $IMG_DIR/${1}.qcow2 30G &> /dev/null
+ sed  "s/${BASEVM}/${VMNAME}/" ${IMG_DIR}/.${BASEVM}.xml > ${CONF_DIR}/${1}.xml
+ sed -i "s!<uuid>.*</uuid>!<uuid>${uuid}</uuid>!" ${CONF_DIR}/${1}.xml
+ sudo virsh define ${CONF_DIR}/${1}.xml &> /dev/null
+ echo_success 
+ echo "VM ${1} Create"
+}
+
+read -p "Name for VM: "   VMNAME
+
+if [ -z $VMNAME  ];then
+echo    Please enter parameters
+exit
+fi
+
+
+ if [ -e $IMG_DIR/${VMNAME}.qcow2 ]; then
+   echo_warning
+   echo "vm ${VMNAME} is exists"
+   exit 38
+ else
+   createvm ${VMNAME}
+   virsh start ${VMNAME}
+ fi
