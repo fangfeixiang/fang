@@ -1,0 +1,66 @@
+前提要求：
+	最少三台
+	每台三块硬盘
+一、相互之间无密码登陆，包括自己登陆自己，
+二、时间同步，
+	chronyc sources查看同步是否生效
+三、用主机名访问，
+	在hosts里设置好主机名和IP的对应，或者在局域网dns里设置
+
+安装
+
+一、三台都安装ceph-mon ceph-osd ceph-mds ceph-radosgw(最后一个不知道是干嘛的)
+二、找一台做主，安装ceph-deploy，大部分操作都能过ceph-deploy来控制完成， 在家目录创建ceph-cluster并切进云
+三、定义mon主机
+	ceph-deploy new ceph-0001 ceph-0002 ceph-0003
+四、对mon主机进行初始化
+	ceph-deploy mon create-initial
+五、创建osd， 每台机器的硬盘中有一台是专门对其它硬盘进行缓存的，工作中尽量用固态硬盘，加快速度，其它数据存储有几块就将缓存盘分几个区，每个区对就一个数据硬盘
+	1、创建缓存盘：parted /dev/vdb mklabel gpt
+		        parted /dev/vdb mkpart primary 1 50%
+		        parted /dev/vdb mkpart primary 50% 100%
+	2、设置缓存盘权限，因为ceph要往里写东西，所以要先创建ceph用户，把属主属组全改成ceph,
+		       chown  ceph.ceph  /dev/vdb1
+		       chown  ceph.ceph  /dev/vdb2
+		       #上面的权限修改为临时操作，重启计算机后，权限会再次被重置。
+   	 	       #我们还需要将规则写到配置文件实现永久有效。
+		      #规则：如果设备名称为/dev/vdb1则设备文件的所有者和所属组都设置为ceph。
+		      #规则：如果设备名称为/dev/vdb2则设备文件的所有者和所属组都设置为ceph。
+  		      vim /etc/udev/rules.d/70-vdb.rules
+		      ENV{DEVNAME}=="/dev/vdb1",OWNER="ceph",GROUP="ceph"
+		      ENV{DEVNAME}=="/dev/vdb2",OWNER="ceph",GROUP="ceph"
+	3、初始化数据磁盘，仅在ceph-deploy主机上操作
+		    ceph-deploy disk zap ceph-0001:vdc   ceph-0001:vdd
+		    ceph-deploy disk zap ceph-0002:vdc   ceph-0002:vdd
+		    ceph-deploy disk zap ceph-0003:vdc   ceph-0003:vdd
+
+	4、创建osd存储空间，也就是将缓存盘和数据盘关联
+		    ceph-deploy osd create ceph-0001:vdc:/dev/vdb1 ceph-0001:vdd:/dev/vdb2
+		    ceph-deploy osd create ceph-0002:vdc:/dev/vdb1 ceph-0002:vdd:/dev/vdb2
+		    ceph-deploy osd create ceph-0003:vdc:/dev/vdb1 ceph-0003:vdd:/dev/vdb2
+
+ceph-s 查看状态，health_ok则正常，ceph搭好了一半，
+剩下的是创建存储方式，然后挂载到客户端 就可以用了
+
+存储方式 ：
+	1、块存储
+	2、文件系统存储
+一.块盘储即创建一个个的空的镜像,将这个镜像挂载到客户机使用,这个镜像可以创建快照,可以克隆,可以恢复,客户端软件ceph-common,
+	创建命令: rbd create 镜像名 --image-feature layering --size 10G
+		image-feature指镜像支持的功能,layering指cow功能
+	客户机挂载: yum -y install ceph-common
+		    scp ceph_ip:/etc/ceph.conf /etc/ceph/  这两个是用户认证文件 
+		    scp ceph_ip:/etc/ceph/ceph.client.admin.keyring /etc/ceph   
+		    rbd map 123(镜像名)
+		    然后客户lsblk会发现多了一块硬盘
+二.文件系统存储
+	服务端,需要有一台机器部署mds节点,可以放在mon节点上
+	ceph-deploy mds create node4  创建mds节点
+	ceph-deploy admin node4 同步配置文件
+	创建存储池, 一个文件系统有两部分组成,一是元数据,放着数据的相关信息,比如它在硬盘里的位置,另一是正真的数据
+	创建元数据池:ceph osd pool create cephfs_data 128
+	创建真实数据池:ceph osd pool create cephfs_metadata 128
+	将两个关联,行成文件系统:ceph fs new myfs1 cephfs_metadata cephfs_data
+	查看:ceph fs ls
+	客户端挂载:mount -t ceph 192.168.1.31:6789:/ /tmp/a -o name=admin,secret=AQAFwVZduI2CGhAA6+I0Lzm9YQPYwDROxCp37Q==
+IP指mon的IP,最后的密码在ceph.client.admin.keyring中
